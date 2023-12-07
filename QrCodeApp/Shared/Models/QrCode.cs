@@ -22,4 +22,13 @@ namespace QrCodeApp.Shared.Models
         public string msg { get; set; }
         public List<QrCodeResponse> data { get; set; }
     }
+
+    public class QRCodeRequest
+    {
+        public string title { get; set; }
+        public string description { get; set; }
+        public string link { get; set; }
+        public string type { get; set; }
+
+    }
 }
