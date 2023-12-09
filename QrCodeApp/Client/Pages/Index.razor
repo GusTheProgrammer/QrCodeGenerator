@@ -9,17 +9,21 @@
 
 <MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
 <MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
-<MudAlert Severity="Severity.Normal">You can find documentation and examples on our website here: <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit"><b>www.mudblazor.com</b></MudLink></MudAlert>
 
 @if (isAuthenticated && qrCodeResponse?.data != null)
 {
 
-    <MudButton OnClick="AddQrCode" Variant="Variant.Filled" Color="Color.Primary">
-        Add a new Qr Code
-    </MudButton>
+    <MudGrid Spacing="2" Justify="Justify.Center">
+        <MudItem xs="12" md="4">
+            <MudTextField @bind-Value="filterText" Placeholder="Filter by name or ID" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudItem>
+        <MudItem xs="12" md="4">
+            <MudButton OnClick="AddQrCode" Variant="Variant.Filled" Color="Color.Primary">Add a new Qr Code</MudButton>
+        </MudItem>
+    </MudGrid>
 
     <MudGrid Spacing="5" Justify="Justify.Center">
-        @foreach (var qrCode in qrCodeResponse.data)
+        @foreach (var qrCode in FilteredQrCodes())
         {
             <MudItem xs="12" sm="6" md="4">
                 <MudCard>
@@ -74,6 +78,7 @@ else
 @code {
     private QrCodeData qrCodeResponse;
     private bool isAuthenticated = false;
+    private string filterText;
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,6 +141,16 @@ else
         // Code to refresh the list of QR codes
         qrCodeResponse = await Http.GetFromJsonAsync<QrCodeData>("qrCode");
         StateHasChanged();
+    }
+
+    private IEnumerable<QrCodeResponse> FilteredQrCodes()
+    {
+        if (string.IsNullOrWhiteSpace(filterText))
+        {
+            return qrCodeResponse.data;
+        }
+
+        return qrCodeResponse.data.Where(qrCode => qrCode.title.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.reference.Contains(filterText, StringComparison.OrdinalIgnoreCase));
     }
 
 

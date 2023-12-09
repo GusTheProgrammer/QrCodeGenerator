@@ -43,7 +43,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },  
-                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
         };
@@ -81,7 +81,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
             Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))
@@ -123,7 +123,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
             Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))
@@ -164,7 +164,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
         };
