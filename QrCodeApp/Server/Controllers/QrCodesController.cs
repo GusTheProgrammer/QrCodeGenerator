@@ -43,7 +43,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },  
-                { "X-RapidAPI-Key", "TOKEN" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
         };
@@ -81,7 +81,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "TOKEN" },
+                { "X-RapidAPI-Key", "" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
             Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))

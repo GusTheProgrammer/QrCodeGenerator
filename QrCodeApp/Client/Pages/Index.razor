@@ -1,75 +1,98 @@
-﻿@page "/add"
+﻿@page "/"
 @using QrCodeApp.Shared.Models
 @inject HttpClient Http
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDialogService DialogService
 
-<h3>Create a New QR Code</h3>
 
-<!-- Button trigger modal -->
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-    Launch demo modal
-</button>
+<PageTitle>QrCode Generator</PageTitle>
 
-<!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                ...
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
-            </div>
-        </div>
-    </div>
-</div>
+<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
+<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
+<MudAlert Severity="Severity.Normal">You can find documentation and examples on our website here: <MudLink Href="https://mudblazor.com" Typo="Typo.body2" Color="Color.Inherit"><b>www.mudblazor.com</b></MudLink></MudAlert>
 
-<EditForm Model="@qrCodeRequest" OnValidSubmit="@HandleValidSubmit">
-    <DataAnnotationsValidator />
-
-    <div>
-        <label>Title:</label>
-        <InputText @bind-Value="qrCodeRequest.title" />
-    </div>
-    <div>
-        <label>Description:</label>
-        <InputText @bind-Value="qrCodeRequest.description" />
-    </div>
-    <div>
-        <label>Link:</label>
-        <InputText @bind-Value="qrCodeRequest.link" />
-    </div>
-    <div>
-        <label>Type:</label>
-        <InputSelect @bind-Value="qrCodeRequest.type">
-            <option value="static">Static</option>
-            <option value="dynamic">Dynamic</option>
-        </InputSelect>
-    </div>
-
-    <button type="submit">Create QR Code</button>
-</EditForm>
-
-@if (!string.IsNullOrEmpty(qrCodeResult))
+@if (isAuthenticated && qrCodeResponse?.data != null)
 {
-    <div>
-        <h4>QR Code Result:</h4>
-        <pre>@qrCodeResult</pre>
-    </div>
+
+    <MudButton OnClick="ShowDialog" Variant="Variant.Filled" Color="Color.Primary">
+        Add a new Qr Code
+    </MudButton>
+
+    <MudGrid Spacing="5" Justify="Justify.Center">
+        @foreach (var qrCode in qrCodeResponse.data)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard>
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@qrCode.title</MudText>
+                                <MudText Typo="Typo.body2">Id: @qrCode.reference</MudText>
+
+                            </CardHeaderContent>
+                            <CardHeaderActions>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Default" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" />
+                            </CardHeaderActions>
+                        </MudCardHeader>
+                        <div class="d-flex justify-center">
+                            <MudImage Height="250" Width="250" ObjectFit='ObjectFit.Fill' src="@qrCode.qrCode" Elevation="25" Class="rounded-lg" />
+                        </div>
+
+                        <MudCardContent>
+                            @if (!string.IsNullOrEmpty(qrCode.description))
+                        {
+                            <MudText Typo="Typo.body2">@qrCode.description</MudText>
+                        }
+                    </MudCardContent>
+                    <MudCardActions>
+                        @if (qrCode.type == "static")
+                        {
+                            <MudChip Color="Color.Warning" Text="Static" />
+                        }
+                        else if (qrCode.type == "dynamic")
+                        {
+                            <MudChip Color="Color.Info" Text="Dynamic" />
+                        }
+                        <div style="flex-grow: 1;"></div>
+                        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Default" />
+                        <a href="@qrCode.link" target="_blank"><MudIconButton Icon="@Icons.Material.Filled.OpenInBrowser" Color="Color.Default" /></a>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+else if (!isAuthenticated)
+{
+    <p>You need to be logged in to view this page.</p>
+}
+else
+{
+    <p>Loading or no data available...</p>
 }
 
 @code {
-    private QRCodeRequest qrCodeRequest = new QRCodeRequest();
-    private string qrCodeResult;
+    private QrCodeData qrCodeResponse;
+    private bool isAuthenticated = false;
 
-    private async Task HandleValidSubmit()
+    protected override async Task OnInitializedAsync()
     {
-        var response = await Http.PostAsJsonAsync("qrCode", qrCodeRequest);
-        qrCodeResult = await response.Content.ReadAsStringAsync();
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            isAuthenticated = true;
+            qrCodeResponse = await Http.GetFromJsonAsync<QrCodeData>("qrCode");
+        }
     }
+
+    private async Task ShowDialog()
+    {
+        var options = new DialogOptions { CloseButton = true };
+        var dialog = DialogService.Show<AddQrCodeDialog>("Create a New QR Code", options);
+    }
+
+
 
 }
