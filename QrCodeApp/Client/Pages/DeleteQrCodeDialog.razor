@@ -1,0 +1,30 @@
+﻿@inject HttpClient Http
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText>Are you sure you want to delete this QR Code?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ConfirmDelete" Color="Color.Primary">Delete</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public string QrCodeId { get; set; }
+    [Parameter] public EventCallback OnDeleteCompleted { get; set; }
+
+    private async Task ConfirmDelete()
+    {
+        await Http.DeleteAsync($"qrCode/{QrCodeId}");
+        MudDialog.Close();
+        await OnDeleteCompleted.InvokeAsync(null);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

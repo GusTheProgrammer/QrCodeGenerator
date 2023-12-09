@@ -14,7 +14,7 @@
 @if (isAuthenticated && qrCodeResponse?.data != null)
 {
 
-    <MudButton OnClick="ShowDialog" Variant="Variant.Filled" Color="Color.Primary">
+    <MudButton OnClick="AddQrCode" Variant="Variant.Filled" Color="Color.Primary">
         Add a new Qr Code
     </MudButton>
 
@@ -30,8 +30,8 @@
 
                             </CardHeaderContent>
                             <CardHeaderActions>
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Default" />
-                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteQrCode(qrCode.reference)" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" OnClick="() => EditQrCode(qrCode)" />
                             </CardHeaderActions>
                         </MudCardHeader>
                         <div class="d-flex justify-center">
@@ -68,7 +68,7 @@ else if (!isAuthenticated)
 }
 else
 {
-    <p>Loading or no data available...</p>
+    <MudProgressCircular Color="Color.Secondary" Size="Size.Large" Indeterminate="true" />
 }
 
 @code {
@@ -87,11 +87,54 @@ else
         }
     }
 
-    private async Task ShowDialog()
+    private async Task AddQrCode()
     {
         var options = new DialogOptions { CloseButton = true };
         var dialog = DialogService.Show<AddQrCodeDialog>("Create a New QR Code", options);
     }
+
+    private async Task EditQrCode(QrCodeResponse qrCode)
+    {
+        var qrCodeRequest = new QRCodeRequest
+            {
+                Id = qrCode.reference,
+                title = qrCode.title,
+                description = qrCode.description,
+                link = qrCode.link,
+                type = qrCode.type
+            };
+
+        var parameters = new DialogParameters
+    {
+        { "EditableQRCode", qrCodeRequest }
+    };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+
+
+        var dialog = DialogService.Show<EditQrCodeDialog>("Edit QR Code", parameters, options);
+    }
+
+    private void DeleteQrCode(string qrCodeId)
+    {
+        var parameters = new DialogParameters
+    {
+        { "QrCodeId", qrCodeId },
+        { "OnDeleteCompleted", EventCallback.Factory.Create(this, RefreshQrCodes) }
+    };
+
+        DialogService.Show<DeleteQrCodeDialog>("Delete QR Code", parameters);
+    }
+
+    private async Task RefreshQrCodes()
+    {
+        // Code to refresh the list of QR codes
+        qrCodeResponse = await Http.GetFromJsonAsync<QrCodeData>("qrCode");
+        StateHasChanged();
+    }
+
+
+
+
 
 
 

@@ -6,15 +6,15 @@
     <DataAnnotationsValidator />
     <MudDialog>
         <DialogContent>
-                <MudCardContent>
-                    <MudTextField Label="Title*" @bind-Value="model.title" For="@(() => model.title)" />
-                    <MudTextField Label="Description*" @bind-Value="model.description" For="@(() => model.description)" />
-                    <MudTextField Label="Link*" @bind-Value="model.link" For="@(() => model.link)" />
-                    <MudRadioGroup @bind-SelectedOption="@model.type">
-                        <MudRadio Option="@("static")" Color="Color.Primary">static</MudRadio>
-                        <MudRadio Option="@("dynamic")" Color="Color.Secondary">dynamic</MudRadio>
-                    </MudRadioGroup>
-                </MudCardContent>
+            <MudCardContent>
+                <MudTextField Label="Title*" @bind-Value="model.title" For="@(() => model.title)" />
+                <MudTextField Label="Description*" @bind-Value="model.description" For="@(() => model.description)" />
+                <MudTextField Label="Link*" @bind-Value="model.link" For="@(() => model.link)" />
+                <MudRadioGroup @bind-SelectedOption="@model.type" ReadOnly>
+                    <MudRadio Option="@("static")" Color="Color.Primary">static</MudRadio>
+                    <MudRadio Option="@("dynamic")" Color="Color.Secondary">dynamic</MudRadio>
+                </MudRadioGroup>
+            </MudCardContent>
         </DialogContent>
         <DialogActions>
             <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
@@ -35,14 +35,28 @@
     private QRCodeRequest model = new QRCodeRequest();
     private string qrCodeResult;
     bool success;
+    [Parameter] public QRCodeRequest EditableQRCode { get; set; } // Add this
+
+    protected override void OnInitialized()
+    {
+        if (EditableQRCode != null)
+        {
+            // Populate the model with data for editing
+            model = EditableQRCode;
+        }
+    }
 
 
     private async Task HandleValidSubmit(EditContext context)
     {
-        var response = await Http.PostAsJsonAsync("qrCode", model);
+
+        // Update existing QR Code
+        var response = await Http.PutAsJsonAsync($"qrCode/{EditableQRCode.Id}", model);
         qrCodeResult = await response.Content.ReadAsStringAsync();
         success = true;
         StateHasChanged();
+
+
     }
 
 }

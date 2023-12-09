@@ -43,7 +43,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },  
-                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
         };
@@ -100,4 +100,84 @@ public class QRCodeController : ControllerBase
         return Ok(body);
     }
 
-}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateQRCode(string id, [FromBody] QRCodeRequest qrCodeRequest)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var apiKey = user.ApiKey;  // Fetch API key from UserManager
+        var client = _clientFactory.CreateClient();
+        var requestUri = qrCodeRequest.type.ToLower() == "dynamic"
+        ? $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/dynamic/{id}"
+        : $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/static/{id}";
+
+        Console.WriteLine("REQUEST URIIIIIIIIII" + requestUri);
+
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Patch,
+            RequestUri = new Uri(requestUri),
+            Headers =
+            {
+                { "api-key", apiKey },
+                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
+            },
+            Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))
+
+            {
+                Headers =
+                {
+                    ContentType = new MediaTypeHeaderValue("application/json")
+                }
+            }
+        };
+
+        using var response = await client.SendAsync(request);
+        Console.WriteLine(response.Content);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(body);
+
+        return Ok(body);
+
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteQRCode(string id)
+    {
+           var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Unauthorized();
+        }
+
+        var apiKey = user.ApiKey;  // Fetch API key from UserManager
+        var client = _clientFactory.CreateClient();
+        var requestUri = $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/{id}";
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Delete,
+            RequestUri = new Uri(requestUri),
+            Headers =
+            {
+                { "api-key", apiKey },
+                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
+            },
+        };
+
+        using var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        return Ok(body);
+    }
+
+
+    }

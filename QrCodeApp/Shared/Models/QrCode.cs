@@ -25,6 +25,8 @@ public class QrCodeData
 
 public class QRCodeRequest
 {
+    public string? Id { get; set; }
+
     [Required]
     public string title { get; set; }
     [Required]
