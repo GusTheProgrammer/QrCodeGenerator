@@ -81,7 +81,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
             Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))
@@ -115,8 +115,6 @@ public class QRCodeController : ControllerBase
         ? $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/dynamic/{id}"
         : $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/static/{id}";
 
-        Console.WriteLine("REQUEST URIIIIIIIIII" + requestUri);
-
 
         var request = new HttpRequestMessage
         {
@@ -125,7 +123,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
             Content = new StringContent(JsonConvert.SerializeObject(qrCodeRequest))
@@ -139,10 +137,8 @@ public class QRCodeController : ControllerBase
         };
 
         using var response = await client.SendAsync(request);
-        Console.WriteLine(response.Content);
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(body);
 
         return Ok(body);
 
@@ -168,7 +164,7 @@ public class QRCodeController : ControllerBase
             Headers =
             {
                 { "api-key", apiKey },
-                { "X-RapidAPI-Key", "" },
+                { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
                 { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
             },
         };

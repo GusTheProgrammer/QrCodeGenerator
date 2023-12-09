@@ -1,5 +1,8 @@
 ﻿@using QrCodeApp.Shared.Models
+@using Newtonsoft.Json
 @inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
 
 <EditForm Model="@model" OnValidSubmit="@HandleValidSubmit">
@@ -17,25 +20,21 @@
             </MudCardContent>
         </DialogContent>
         <DialogActions>
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Update</MudButton>
 
         </DialogActions>
     </MudDialog>
 </EditForm>
 
-@if (!string.IsNullOrEmpty(qrCodeResult))
-{
-    <div>
-        <h4>QR Code Result:</h4>
-        <pre>@qrCodeResult</pre>
-    </div>
-}
-
 @code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }              
+    [Parameter] public EventCallback OnEditCompleted { get; set; }
+    [Parameter] public QRCodeRequest EditableQRCode { get; set; }
     private QRCodeRequest model = new QRCodeRequest();
-    private string qrCodeResult;
+    private QrCodeActionResponse qrCodeActionResponse;
+
     bool success;
-    [Parameter] public QRCodeRequest EditableQRCode { get; set; } // Add this
+    
 
     protected override void OnInitialized()
     {
@@ -50,10 +49,29 @@
     private async Task HandleValidSubmit(EditContext context)
     {
 
-        // Update existing QR Code
         var response = await Http.PutAsJsonAsync($"qrCode/{EditableQRCode.Id}", model);
-        qrCodeResult = await response.Content.ReadAsStringAsync();
-        success = true;
+        if (response.IsSuccessStatusCode)
+        {
+            var responseContent = await response.Content.ReadAsStringAsync();
+            qrCodeActionResponse = JsonConvert.DeserializeObject<QrCodeActionResponse>(responseContent);
+            success = qrCodeActionResponse != null && !string.IsNullOrEmpty(qrCodeActionResponse.msg);
+
+            if (qrCodeActionResponse != null && qrCodeActionResponse.msg == "Request Successful")
+            {
+                await OnEditCompleted.InvokeAsync(null);
+                Snackbar.Add("Qr Code Edited Successfully!", Severity.Success);
+                MudDialog.Close();
+
+            } else
+            {
+                Snackbar.Add($"Qr Code Edit Failed: {qrCodeActionResponse}", Severity.Error);
+            }
+        }
+        else
+        {
+            success = false;
+        }
+
         StateHasChanged();
 
 

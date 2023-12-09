@@ -37,3 +37,14 @@ public class QRCodeRequest
     public string type { get; set; }
 
 }
+
+
+public class QrCodeActionResponse
+{
+    public string msg { get; set; }
+    public string @ref { get; set; }
+    public string updated { get; set; }
+
+}
+
+

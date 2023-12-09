@@ -89,8 +89,13 @@ else
 
     private async Task AddQrCode()
     {
-        var options = new DialogOptions { CloseButton = true };
-        var dialog = DialogService.Show<AddQrCodeDialog>("Create a New QR Code", options);
+
+        var parameters = new DialogParameters
+    {
+        { "OnAddCompleted", EventCallback.Factory.Create(this, RefreshQrCodes) }
+
+    };
+        DialogService.Show<AddQrCodeDialog>("Create a New QR Code", parameters);
     }
 
     private async Task EditQrCode(QrCodeResponse qrCode)
@@ -106,12 +111,13 @@ else
 
         var parameters = new DialogParameters
     {
-        { "EditableQRCode", qrCodeRequest }
+        { "EditableQRCode", qrCodeRequest },
+        { "OnEditCompleted", EventCallback.Factory.Create(this, RefreshQrCodes) }
+
     };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
 
 
-        var dialog = DialogService.Show<EditQrCodeDialog>("Edit QR Code", parameters, options);
+       DialogService.Show<EditQrCodeDialog>("Edit QR Code", parameters);
     }
 
     private void DeleteQrCode(string qrCodeId)
