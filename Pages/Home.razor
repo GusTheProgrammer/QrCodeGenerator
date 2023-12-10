@@ -1,0 +1,53 @@
+﻿@page "/"
+@inject ApiService ApiService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<button @onclick="FetchQRCodes">Fetch QR Codes</button>
+<button @onclick="ExportData">Export Data</button>
+<InputFile OnChange="ImportData" />
+
+@code {
+
+    private async Task FetchQRCodes()
+    {
+        try
+        {
+            var qrCodes = await ApiService.GetQRCodes();
+            await JSRuntime.InvokeVoidAsync("console.log", "QR Codes:", qrCodes);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error fetching QR Codes: {ex.Message}");
+        }
+    }
+    private async Task ExportData()
+    {
+        var userDataJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+        if (string.IsNullOrEmpty(userDataJson))
+        {
+            Console.WriteLine("No user data to export.");
+            return;
+        }
+
+        // Trigger download (using Blazor download file logic or JS interop)
+        await JSRuntime.InvokeVoidAsync("downloadFile", "userData.json", "text/json", userDataJson);
+    }
+
+    private async Task ImportData(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        using var reader = new StreamReader(file.OpenReadStream());
+        var userDataJson = await reader.ReadToEndAsync();
+
+        // Store in local storage
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", userDataJson);
+
+        Console.WriteLine("User data imported successfully.");
+    }
+}
