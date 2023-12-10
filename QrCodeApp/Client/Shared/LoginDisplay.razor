@@ -4,15 +4,15 @@
 
 <AuthorizeView>
     <Authorized>
-        <a href="authentication/profile">Hello, @context.User.Identity?.Name!</a>
-        <button class="nav-link btn btn-link" @onclick="BeginLogOut">Log out</button>
-    </Authorized>
-    <NotAuthorized>
-        <a href="authentication/register">Register</a>
-        <a href="authentication/login">Log in</a>
-    </NotAuthorized>
-</AuthorizeView>
-
+        <MudText Typo="Typo.body1" Class="mr-5">Hello, @context.User.Identity?.Name!</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Link="authentication/profile" />
+            <MudIconButton Icon="@Icons.Material.Filled.ExitToApp" Color="Color.Inherit" OnClick="BeginLogOut" />
+        </Authorized>
+        <NotAuthorized>
+            <MudIconButton Icon="@Icons.Material.Filled.Login" Color="Color.Inherit" Link="authentication/login" />
+            <MudIconButton Icon="@Icons.Material.Filled.AppRegistration" Color="Color.Inherit" Link="authentication/register" />
+        </NotAuthorized>
+    </AuthorizeView>
 @code{
     private void BeginLogOut()
     {

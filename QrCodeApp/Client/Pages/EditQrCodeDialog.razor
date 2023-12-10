@@ -12,7 +12,7 @@
             <MudCardContent>
                 <MudTextField Label="Title*" @bind-Value="model.title" For="@(() => model.title)" />
                 <MudTextField Label="Description*" @bind-Value="model.description" For="@(() => model.description)" />
-                <MudTextField Label="Link*" @bind-Value="model.link" For="@(() => model.link)" />
+                <MudTextField Label="Link*" @bind-Value="model.link" Disabled="@(model.type == "static")" For="@(() => model.link)" />
                 <MudRadioGroup @bind-SelectedOption="@model.type" ReadOnly>
                     <MudRadio Option="@("static")" Color="Color.Primary">static</MudRadio>
                     <MudRadio Option="@("dynamic")" Color="Color.Secondary">dynamic</MudRadio>

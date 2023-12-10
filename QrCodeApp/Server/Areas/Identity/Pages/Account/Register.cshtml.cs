@@ -194,7 +194,7 @@ namespace QrCodeApp.Server.Areas.Identity.Pages.Account
                 RequestUri = new Uri("https://qr-code-dynamic-and-static1.p.rapidapi.com/user/generate"),
                 Headers =
         {
-            { "X-RapidAPI-Key", "" },
+            { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
             { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
         },
             };

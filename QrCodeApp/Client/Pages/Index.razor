@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using QrCodeApp.Shared.Models
+@using static MudBlazor.CategoryTypes
 @inject HttpClient Http
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IDialogService DialogService
@@ -7,31 +8,80 @@
 
 <PageTitle>QrCode Generator</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor!</MudText>
+<MudText Typo="Typo.h3" GutterBottom="true">QR Code Management System</MudText>
+<MudText Class="mb-8">Welcome to the QR Code Generator, a simple tool for creating and managing your QR codes.</MudText>
+
+<div class="mx-auto mb-16">
+    <MudExpansionPanels>
+        <MudExpansionPanel>
+            <TitleContent>
+                <div class="d-flex">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" class="mr-3"></MudIcon>
+                    <MudText>Static vs. Dynamic QR Codes</MudText>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <MudText Typo="Typo.body1" GutterBottom="true">
+                    <b>Static QR Codes</b> are fixed, meaning the data encoded in the QR code does not change once it's created. These are ideal for scenarios where the information is permanent, like an email address or a standard URL.
+                </MudText>
+                <MudText Typo="Typo.body1">
+                    <b>Dynamic QR Codes</b>, on the other hand, are flexible and can be updated or changed even after printing. They're perfect for marketing campaigns where you might need to update the URL or other data.
+                </MudText>
+            </ChildContent>
+        </MudExpansionPanel>
+
+        <MudExpansionPanel>
+            <TitleContent>
+                <div class="d-flex">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" class="mr-3"></MudIcon>
+                    <MudText>How to Use the QR Code Generator</MudText>
+                </div>
+            </TitleContent>
+            <ChildContent>
+                <MudText Typo="Typo.body1" GutterBottom="true">
+                    Start by navigating to the <b>Add QR Code</b> button to create a new QR code. Fill in the details, choose the type (static or dynamic), and hit save. Your new QR code will appear in the grid below.
+                </MudText>
+                <MudText Typo="Typo.body1" GutterBottom="true">
+                    To edit or delete a QR code, use the <MudIcon Icon="@Icons.Material.Filled.Edit" /> or <MudIcon Icon="@Icons.Material.Filled.Delete" /> icons on each QR code card. For dynamic QR codes, you can update the destination URL at any time without changing the QR code itself.
+                </MudText>
+                <MudText Typo="Typo.body1">
+                    Use the filter bar to quickly find QR codes by name or ID. To download or navigate to the QR code's link, use the <MudIcon Icon="@Icons.Material.Filled.Download" /> or <MudIcon Icon="@Icons.Material.Filled.OpenInBrowser" /> icons respectively.
+                </MudText>
+            </ChildContent>
+        </MudExpansionPanel>
+    </MudExpansionPanels>
+</div>
+
+
+
 
 @if (isAuthenticated && qrCodeResponse?.data != null)
 {
-
-    <MudGrid Spacing="2" Justify="Justify.Center">
-        <MudItem xs="12" md="4">
-            <MudTextField @bind-Value="filterText" Placeholder="Filter by name or ID" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
-        </MudItem>
-        <MudItem xs="12" md="4">
-            <MudButton OnClick="AddQrCode" Variant="Variant.Filled" Color="Color.Primary">Add a new Qr Code</MudButton>
-        </MudItem>
-    </MudGrid>
+    <MudGrid Class="mb-16" Justify="Justify.SpaceBetween">
+        <MudItem xs="6">
+            <MudTextField @bind-Value="filterText" Placeholder="Filter by name, description or ID"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                            FullWidth />
+         </MudItem>
+         <MudItem xs="6" Style="display: flex; justify-content: flex-end;">
+             <MudButton OnClick="AddQrCode" Color="Color.Tertiary" Variant="Variant.Filled"
+                        EndIcon="@Icons.Material.Filled.Add">
+                 Add QR Code
+             </MudButton>
+         </MudItem>
+     </MudGrid>
+    <MudSpacer />
 
     <MudGrid Spacing="5" Justify="Justify.Center">
         @foreach (var qrCode in FilteredQrCodes())
         {
-            <MudItem xs="12" sm="6" md="4">
-                <MudCard>
+            <MudItem xs="12" md="4" sm="6">
+                <MudCard Style="height:100%">
                     <MudCardHeader>
                         <CardHeaderContent>
-                            <MudText Typo="Typo.h5">@qrCode.title</MudText>
-                                <MudText Typo="Typo.body2">Id: @qrCode.reference</MudText>
-
+                            <MudText Typo="Typo.h5">
+                                <MudHighlighter Text="@qrCode.title" HighlightedText="@filterText" />
+                            </MudText>
                             </CardHeaderContent>
                             <CardHeaderActions>
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteQrCode(qrCode.reference)" />
@@ -39,13 +89,15 @@
                             </CardHeaderActions>
                         </MudCardHeader>
                         <div class="d-flex justify-center">
-                            <MudImage Height="250" Width="250" ObjectFit='ObjectFit.Fill' src="@qrCode.qrCode" Elevation="25" Class="rounded-lg" />
+                            <MudImage Height="300" Width="300" ObjectFit='ObjectFit.Fill' src="@qrCode.qrCode" Elevation="25" Class="rounded-lg" />
                         </div>
 
                         <MudCardContent>
                             @if (!string.IsNullOrEmpty(qrCode.description))
                         {
-                            <MudText Typo="Typo.body2">@qrCode.description</MudText>
+                            <MudText Typo="Typo.body2">
+                                <MudHighlighter Text="@qrCode.description" HighlightedText="@filterText" />
+                            </MudText>
                         }
                     </MudCardContent>
                     <MudCardActions>
@@ -65,20 +117,23 @@
             </MudItem>
         }
     </MudGrid>
+
+
 }
 else if (!isAuthenticated)
 {
-    <p>You need to be logged in to view this page.</p>
+    <RedirectToLogin />
 }
 else
 {
-    <MudProgressCircular Color="Color.Secondary" Size="Size.Large" Indeterminate="true" />
+    <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="my-7" />
 }
 
 @code {
     private QrCodeData qrCodeResponse;
     private bool isAuthenticated = false;
     private string filterText;
+    bool isOpen;
 
     protected override async Task OnInitializedAsync()
     {
@@ -94,13 +149,13 @@ else
 
     private async Task AddQrCode()
     {
-
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true};
         var parameters = new DialogParameters
     {
         { "OnAddCompleted", EventCallback.Factory.Create(this, RefreshQrCodes) }
 
     };
-        DialogService.Show<AddQrCodeDialog>("Create a New QR Code", parameters);
+        DialogService.Show<AddQrCodeDialog>("Create a New QR Code", parameters, options);
     }
 
     private async Task EditQrCode(QrCodeResponse qrCode)
@@ -114,6 +169,7 @@ else
                 type = qrCode.type
             };
 
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
         var parameters = new DialogParameters
     {
         { "EditableQRCode", qrCodeRequest },
@@ -122,18 +178,19 @@ else
     };
 
 
-       DialogService.Show<EditQrCodeDialog>("Edit QR Code", parameters);
+        DialogService.Show<EditQrCodeDialog>("Edit QR Code", parameters, options);
     }
 
     private void DeleteQrCode(string qrCodeId)
     {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
         var parameters = new DialogParameters
     {
         { "QrCodeId", qrCodeId },
         { "OnDeleteCompleted", EventCallback.Factory.Create(this, RefreshQrCodes) }
     };
 
-        DialogService.Show<DeleteQrCodeDialog>("Delete QR Code", parameters);
+        DialogService.Show<DeleteQrCodeDialog>("Delete QR Code", parameters, options);
     }
 
     private async Task RefreshQrCodes()
@@ -150,13 +207,6 @@ else
             return qrCodeResponse.data;
         }
 
-        return qrCodeResponse.data.Where(qrCode => qrCode.title.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.reference.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+        return qrCodeResponse.data.Where(qrCode => qrCode.title.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.reference.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.description.Contains(filterText, StringComparison.OrdinalIgnoreCase));
     }
-
-
-
-
-
-
-
 }
