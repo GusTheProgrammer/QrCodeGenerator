@@ -1,6 +1,7 @@
-﻿@inherits LayoutComponentBase
+﻿@using QrCodeGenerator.Services
+@inherits LayoutComponentBase
 @inject NavigationManager Navigation
-
+@inject GlobalStateService GlobalStateService
 <MudThemeProvider @ref="@_mudThemeProvider" @bind-IsDarkMode="@_isDarkMode" />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -18,8 +19,15 @@
                              Icon="@Icons.Material.Filled.Brightness4" Color="Color.Inherit"
                              ToggledIcon="@Icons.Material.Filled.Brightness7" ToggledColor="Color.Inherit" Title="Toggle Dark Mode" />
         <MudSwitch @bind-Checked="@_isDarkMode" Color="Color.Primary" T="bool" />
-            
-        </MudAppBar>
+       
+
+        @if (_userDataLoaded)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Link="profile" />
+            <MudText Typo="Typo.subtitle1">@_userName</MudText>
+
+        }
+    </MudAppBar>
 
         <MudMainContent>
             <MudContainer MaxWidth="MaxWidth.Large" Class="my-8 pt-8">
@@ -31,14 +39,21 @@
 
 @code {
     private bool _isDarkMode;
+    private bool _userDataLoaded;
+    private string? _userName;
     private MudThemeProvider _mudThemeProvider;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var userData = await GlobalStateService.GetUserDataAsync();
+            _userDataLoaded = userData != null;
+            _userName = userData?.Name;
+
             _isDarkMode = await _mudThemeProvider.GetSystemPreference();
             await _mudThemeProvider.WatchSystemPreference(OnSystemPreferenceChanged);
+
             StateHasChanged();
         }
     }

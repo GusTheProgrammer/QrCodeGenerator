@@ -15,3 +15,8 @@ function downloadFile(filename, contentType, content) {
         }, 0);
     }
 }
+
+
+window.clearLocalStorage = () => {
+    localStorage.clear();
+};

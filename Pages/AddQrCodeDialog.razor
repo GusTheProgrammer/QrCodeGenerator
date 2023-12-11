@@ -1,0 +1,68 @@
+﻿@using QrCodeGenerator.Models
+@using Newtonsoft.Json
+@inject ApiService ApiService
+@inject ISnackbar Snackbar
+
+
+<EditForm Model="@model" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid>
+                <MudCardContent>
+                    <MudTextField Label="Title*" @bind-Value="model.title" For="@(() => model.title)" />
+                    <MudTextField Label="Description*" @bind-Value="model.description" For="@(() => model.description)" />
+                    <MudTextField Label="Link*" @bind-Value="model.link" For="@(() => model.link)" />
+                    <MudRadioGroup @bind-SelectedOption="@model.type">
+                        <MudRadio Option="@("static")" Color="Color.Primary">static</MudRadio>
+                        <MudRadio Option="@("dynamic")" Color="Color.Secondary">dynamic</MudRadio>
+                    </MudRadioGroup>
+                </MudCardContent>
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Add</MudButton>
+
+        </DialogActions>
+    </MudDialog>
+</EditForm>
+
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public EventCallback OnAddCompleted { get; set; }
+    private QrCodeActionResponse qrCodeActionResponse;
+    private QRCodeRequest model = new QRCodeRequest();
+    bool success;
+
+
+    private async Task HandleValidSubmit(EditContext context)
+    {
+        try
+        {
+            string responseContent = await ApiService.CreateQRCode(model);
+            qrCodeActionResponse = JsonConvert.DeserializeObject<QrCodeActionResponse>(responseContent);
+
+            success = qrCodeActionResponse != null && !string.IsNullOrEmpty(qrCodeActionResponse.msg);
+
+            if (qrCodeActionResponse != null && qrCodeActionResponse.msg == "Request Successful")
+            {
+                Snackbar.Add("QR Code Added Successfully!", Severity.Success);
+                await OnAddCompleted.InvokeAsync(null);
+                MudDialog.Close();
+            }
+            else
+            {
+                Snackbar.Add($"QR Code Add Failed: {qrCodeActionResponse.msg}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            success = false;
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,142 @@
+﻿@page "/profile"
+@using Newtonsoft.Json
+@using QrCodeGenerator.Models
+@inject ApiService ApiService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+
+
+<MudGrid Justify="Justify.Center">
+
+    <MudItem xs="12">
+        @if (!isUserRegistered)
+        {
+            <MudText Typo="Typo.h3">Registration</MudText>
+
+            <MudForm Model="@user" OnValidSubmit="HandleRegistration">
+                <MudTextField T="string" @bind-Value="user.Name" Label="Name" Variant="Variant.Outlined" />
+                 <MudButton Type="ButtonType.Submit" Color="Color.Primary">Register</MudButton>
+             </MudForm>
+        }
+    </MudItem>
+    <MudItem xs="3">
+        <MudButton Class="d-flex align-center justify-center mud-width-full py-8" @onclick="ExportData" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Secondary">Export Data</MudButton>
+    </MudItem>
+    <MudItem xs="3">
+        <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
+            <ButtonTemplate>
+                <MudButton Class="d-flex align-center justify-center mud-width-full py-8" HtmlTag="label"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.CloudUpload"
+                           for="@context.Id">
+                    Import Data
+                </MudButton>
+            </ButtonTemplate>
+        </MudFileUpload>
+    </MudItem>
+    <MudItem xs="3">
+        <MudButton Class="d-flex align-center justify-center mud-width-full py-8" @onclick="DeleteData" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Delete</MudButton>
+    </MudItem>
+</MudGrid>
+
+
+
+@code {
+    private User user = new User();
+    private string registrationMessage = string.Empty;
+    private bool isUserRegistered = false;
+    private MudForm form;
+    private IBrowserFile uploadedFile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userDataJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+        isUserRegistered = !string.IsNullOrEmpty(userDataJson);
+    }
+
+    private async Task HandleRegistration()
+    {
+        try
+        {
+            var responseJson = await ApiService.GenerateApiKey();
+            var responseObj = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(responseJson);
+            var apiKey = (string)responseObj.data; // Extracting just the API key
+
+            user.ApiKey = apiKey;
+            var userDataJson = Newtonsoft.Json.JsonConvert.SerializeObject(user);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", userDataJson);
+
+            registrationMessage = "Registration successful! API Key generated.";
+
+            Snackbar.Add(registrationMessage, Severity.Success);
+            NavigationManager.NavigateTo("/");  
+
+
+        }
+        catch (Exception ex)
+        {
+            registrationMessage = $"Error during registration: {ex.Message}";
+            Snackbar.Add(registrationMessage, Severity.Error);
+        }
+    }
+
+    private async Task ExportData()
+    {
+        var userDataJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+        if (string.IsNullOrEmpty(userDataJson))
+        {
+            Snackbar.Add("No user data to export.", Severity.Warning);
+            return;
+        }
+
+        // Trigger download (using Blazor download file logic or JS interop)
+        await JSRuntime.InvokeVoidAsync("downloadFile", "userData.json", "text/json", userDataJson);
+        Snackbar.Add("Data Exported Successfully!", Severity.Success);
+
+    }
+
+    private void UploadFiles(IBrowserFile file)
+    {
+        // Assuming you want to handle file upload here
+        uploadedFile = file;
+        ImportData(uploadedFile); // Call the ImportData method for the uploaded file
+    }
+
+    private async Task ImportData(IBrowserFile file)
+    {
+        if (file == null) return;
+
+        using var reader = new StreamReader(file.OpenReadStream());
+        var userDataJson = await reader.ReadToEndAsync();
+
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", userDataJson);
+        Snackbar.Add("User data imported successfully!", Severity.Success);
+        NavigationManager.NavigateTo("/");
+
+    }
+
+    private async Task DeleteData()
+    {
+        try
+        {
+            // Remove data from local storage
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "user");
+
+            // Reset user data
+            user = new User();
+            isUserRegistered = false;
+            registrationMessage = "Data deleted successfully!";
+            Snackbar.Add(registrationMessage, Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            registrationMessage = $"Error during data deletion: {ex.Message}";
+            Snackbar.Add(registrationMessage, Severity.Error);
+        }
+    }
+
+
+}

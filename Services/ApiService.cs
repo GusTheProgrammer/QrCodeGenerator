@@ -1,24 +1,19 @@
-﻿using QrCodeGenerator.Services;
-using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
+﻿using System.Net.Http.Headers;
 using QrCodeGenerator.Models;
-using System.Threading.Tasks;
 using Microsoft.JSInterop;
-using System.Net.Http.Headers;
+using QrCodeGenerator.Services;
 
 public class ApiService
 {
     private readonly HttpClient _httpClient;
-    private readonly ApiServiceConfig _config;
     private readonly IJSRuntime _jsRuntime;
+    private readonly GlobalStateService _globalStateService;
 
-    public ApiService(HttpClient httpClient, ApiServiceConfig apiServiceConfig, IJSRuntime jsRuntime)
+    public ApiService(HttpClient httpClient, IJSRuntime jsRuntime, GlobalStateService globalStateService)
     {
         _httpClient = httpClient;
-        _config = apiServiceConfig;
         _jsRuntime = jsRuntime;
+        _globalStateService = globalStateService;
     }
 
 
@@ -39,25 +34,13 @@ public class ApiService
         {
             response.EnsureSuccessStatusCode();
             var body = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(body);
-            return body; // Assuming the API key is in the response body
+            return body; 
         }
     }
 
     public async Task<QrCodeData> GetQRCodes()
     {
-        var userJson = await _jsRuntime.InvokeAsync<string>("localStorage.getItem", "user");
-        if (string.IsNullOrEmpty(userJson))
-        {
-            throw new InvalidOperationException("User data not found in local storage.");
-        }
-
-        var user = Newtonsoft.Json.JsonConvert.DeserializeObject<User>(userJson);
-        var apiKey = user.ApiKey;
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            throw new InvalidOperationException("API key not found in user data.");
-        }
+        var apiKey = await GetApiKeyFromLocalStorage();
 
         var request = new HttpRequestMessage
         {
@@ -74,8 +57,114 @@ public class ApiService
         var response = await _httpClient.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var responseBody = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(responseBody);
         return System.Text.Json.JsonSerializer.Deserialize<QrCodeData>(responseBody);
     }
+
+    public async Task<string> CreateQRCode(QRCodeRequest qrCodeRequest)
+    {
+        var apiKey = await GetApiKeyFromLocalStorage();
+
+        var requestUri = qrCodeRequest.type.ToLower() == "dynamic"
+            ? "https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/dynamic"
+            : "https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/static";
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri(requestUri),
+            Headers =
+        {
+            { "api-key", apiKey },
+            { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+            { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
+        },
+            Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(qrCodeRequest))
+            {
+                Headers = { ContentType = new MediaTypeHeaderValue("application/json") }
+            }
+        };
+
+        using var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        return body;
+    }
+
+    public async Task<string> UpdateQRCode(string id, QRCodeRequest qrCodeRequest)
+    {
+        var apiKey = await GetApiKeyFromLocalStorage();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new InvalidOperationException("API key not found.");
+        }
+
+        var requestUri = qrCodeRequest.type.ToLower() == "dynamic"
+            ? $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/dynamic/{id}"
+            : $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/static/{id}";
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Patch,
+            RequestUri = new Uri(requestUri),
+            Headers =
+        {
+            { "api-key", apiKey },
+            { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+            { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
+        },
+            Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(qrCodeRequest))
+            {
+                Headers = { ContentType = new MediaTypeHeaderValue("application/json") }
+            }
+        };
+
+        using var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        return body;
+    }
+
+    public async Task<string> DeleteQRCode(string id)
+    {
+        var apiKey = await GetApiKeyFromLocalStorage();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new InvalidOperationException("API key not found.");
+        }
+
+        var requestUri = $"https://qr-code-dynamic-and-static1.p.rapidapi.com/qrcode/{id}";
+
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Delete,
+            RequestUri = new Uri(requestUri),
+            Headers =
+        {
+            { "api-key", apiKey },
+            { "X-RapidAPI-Key", "551508ce8amsh3073d2efcf85c6cp165dd6jsn01c2166ee7f2" },
+            { "X-RapidAPI-Host", "qr-code-dynamic-and-static1.p.rapidapi.com" },
+        },
+        };
+
+        using var response = await _httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var body = await response.Content.ReadAsStringAsync();
+        return body;
+    }
+
+
+
+    private async Task<string> GetApiKeyFromLocalStorage()
+    {
+        var apiKey = await _globalStateService.GetApiKeyAsync();
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            throw new InvalidOperationException("API key not found.");
+        }
+        return apiKey;
+    }
+
+
+
 
 }

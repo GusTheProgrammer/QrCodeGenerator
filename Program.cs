@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -11,13 +12,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddHttpClient<ApiService>();
 builder.Services.AddMudServices();
-
-var apiServiceConfig = new ApiServiceConfig
-{
-    ApiKey = Environment.GetEnvironmentVariable("X_RAPID_API_KEY"),
-};
-
-// Register ApiServiceConfig
-builder.Services.AddSingleton(apiServiceConfig);
+builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<GlobalStateService>();
 
 await builder.Build().RunAsync();

@@ -1,0 +1,55 @@
+﻿@using QrCodeGenerator.Models
+@using Newtonsoft.Json
+@inject ApiService ApiService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudText>Are you sure you want to delete this QR Code?</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="ConfirmDelete" Color="Color.Primary">Delete</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public string QrCodeId { get; set; }
+    [Parameter] public EventCallback OnDeleteCompleted { get; set; }
+    private QrCodeActionResponse qrCodeActionResponse;
+    bool success;
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            string responseContent = await ApiService.DeleteQRCode(QrCodeId);
+            qrCodeActionResponse = JsonConvert.DeserializeObject<QrCodeActionResponse>(responseContent);
+
+            // Check success and handle response
+            if (qrCodeActionResponse != null && qrCodeActionResponse.msg == "Request Successful")
+            {
+                Snackbar.Add("QR Code Deleted Successfully!", Severity.Success);
+                await OnDeleteCompleted.InvokeAsync(null);
+                MudDialog.Close();
+            }
+            else
+            {
+                Snackbar.Add($"QR Code Delete Failed: {qrCodeActionResponse.msg}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred: {ex.Message}", Severity.Error);
+        }
+
+        StateHasChanged();
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
