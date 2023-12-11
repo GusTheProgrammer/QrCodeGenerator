@@ -23,8 +23,12 @@
 
         @if (_userDataLoaded)
         {
-            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Link="profile" />
-            <MudText Typo="Typo.subtitle1">@_userName</MudText>
+            <MudLink Href="/profile" Color="Color.Inherit" Style="display: flex; align-items: center;">
+                <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit"/>
+                <MudText Typo="Typo.subtitle1">@_userName</MudText>
+            </MudLink>
+
+            
 
         }
     </MudAppBar>

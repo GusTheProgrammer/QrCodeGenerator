@@ -13,35 +13,45 @@
     <MudItem xs="12">
         @if (!isUserRegistered)
         {
-            <MudText Typo="Typo.h3">Registration</MudText>
+            <MudText Class="mb-6" Typo="Typo.h4">Register for an API Key!</MudText>
+            <EditForm Model="@user" OnValidSubmit="HandleRegistration">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-            <MudForm Model="@user" OnValidSubmit="HandleRegistration">
-                <MudTextField T="string" @bind-Value="user.Name" Label="Name" Variant="Variant.Outlined" />
-                 <MudButton Type="ButtonType.Submit" Color="Color.Primary">Register</MudButton>
-             </MudForm>
+                <MudGrid Class="mb-6" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%">
+                    <MudItem xs="12" md="8">
+                        <MudTextField Label="Name" @bind-Value="user.Name" Variant="Variant.Filled" FullWidth />
+                         <ValidationMessage For="@(() => user.Name)" />
+                     </MudItem>
+                     <MudItem xs="12" md="4" Style="display: flex; justify-content: center; align-items: center;">
+                         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Register</MudButton>
+                     </MudItem>
+                 </MudGrid>
+             </EditForm>
+
+
         }
     </MudItem>
-    <MudItem xs="3">
-        <MudButton Class="d-flex align-center justify-center mud-width-full py-8" @onclick="ExportData" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Save" Color="Color.Secondary">Export Data</MudButton>
+</MudGrid>
+<MudDivider DividerType="DividerType.Middle" Class="my-6" />
+
+<MudGrid Class="mt-6" Justify="Justify.FlexEnd">
+    <MudItem xs="4" >
+        <MudButton @onclick="ExportData" Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Save" Style="width: 200px; height: 48px;">Export Data</MudButton>
     </MudItem>
-    <MudItem xs="3">
+    <MudItem xs="4">
         <MudFileUpload T="IBrowserFile" FilesChanged="UploadFiles">
             <ButtonTemplate>
-                <MudButton Class="d-flex align-center justify-center mud-width-full py-8" HtmlTag="label"
-                           Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.CloudUpload"
-                           for="@context.Id">
+                <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload" for="@context.Id" Style="width: 200px; height: 48px; position: relative; top: -2px;">
                     Import Data
                 </MudButton>
             </ButtonTemplate>
         </MudFileUpload>
     </MudItem>
-    <MudItem xs="3">
-        <MudButton Class="d-flex align-center justify-center mud-width-full py-8" @onclick="DeleteData" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Delete</MudButton>
+    <MudItem xs="4">
+        <MudButton @onclick="DeleteData" Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Style="width: 200px; height: 48px;">Delete</MudButton>
     </MudItem>
 </MudGrid>
-
 
 
 @code {
@@ -130,6 +140,8 @@
             isUserRegistered = false;
             registrationMessage = "Data deleted successfully!";
             Snackbar.Add(registrationMessage, Severity.Success);
+            NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+
         }
         catch (Exception ex)
         {

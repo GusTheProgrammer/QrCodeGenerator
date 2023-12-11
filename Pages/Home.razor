@@ -5,6 +5,7 @@
 @inject HttpClient Http
 @inject GlobalStateService GlobalState
 @inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject IJSRuntime JSRuntime
 
@@ -56,7 +57,7 @@
 
 <div class="mx-auto mb-16">
     <MudAlert Severity="Severity.Error">
-        Your API key is stored in local storage. <a Style="color: red; text-decoration: underline;" href="/profile">Download</a> and keep it safe if you want to use it on a different device.
+        Your API key is stored in local storage. <b><a Style="color: #f43141; text-decoration: underline;" href="/profile">Download</a></b> and keep it safe if you want to use it on a different device.
     </MudAlert>
 
     <MudAlert Severity="Severity.Info">
@@ -70,11 +71,11 @@
 {
     <div class="redirect-message">
         <MudText Typo="Typo.h5">@redirectMessage</MudText>
-    </div>
+        </div>
 }
 
 
-@if (qrCodeResponse != null)
+@if (hasApiCallCompleted && hasQrCodes)
 {
     <MudGrid Class="mb-16" Justify="Justify.SpaceBetween">
         <MudItem xs="6">
@@ -129,7 +130,7 @@
                             <MudChip Color="Color.Info" Text="Dynamic" />
                         }
                         <div style="flex-grow: 1;"></div>
-                        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Default" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Download" Color="Color.Default" @onclick="() => DownloadQrCodeImage(qrCode)" />
                         <a href="@qrCode.link" target="_blank"><MudIconButton Icon="@Icons.Material.Filled.OpenInBrowser" Color="Color.Default" /></a>
                     </MudCardActions>
                 </MudCard>
@@ -137,15 +138,87 @@
         }
     </MudGrid>
 }
+else if (hasApiCallCompleted && !hasQrCodes)
+{
+    <MudGrid Class="mb-16" Justify="Justify.SpaceBetween">
+        <MudItem xs="6">
+            <MudTextField @bind-Value="filterText" Placeholder="Filter by name, description or ID"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                            FullWidth />
+         </MudItem>
+         <MudItem xs="6" Style="display: flex; justify-content: flex-end;">
+             <MudButton OnClick="AddQrCode" Color="Color.Tertiary" Variant="Variant.Filled"
+                        EndIcon="@Icons.Material.Filled.Add">
+                 Add QR Code
+             </MudButton>
+         </MudItem>
+     </MudGrid>
+
+<MudSpacer />
+    <MudText Typo="Typo.h5" GutterBottom="true">No QR Codes Found</MudText>
+
+   
+
+    <MudText Typo="Typo.body1">
+        It looks like you don't have any QR codes yet. Click the "Add QR Code" button to get started!
+    </MudText>
+    <MudContainer Class="d-flex align-content-center justify-center flex-wrap flex-grow-1 gap-4" Elevation="0" Style="min-height: 50vh;">
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+            <!-- top -->
+            <rect height="10" width="80" x="0" y="0" />
+            <!-- top fold -->
+            <rect height="10" width="50" x="60" y="40" />
+            <!-- break 1-->
+            <rect height="10" width="10" x="80" y="10" />
+            <!-- break 2-->
+            <rect height="10" width="10" x="90" y="20" />
+            <!-- left -->
+            <rect height="110" width="10" x="0" y="0" />
+            <!-- left fold-->
+            <rect height="50" width="10" x="60" y="0" />
+            <!-- left eye -->
+            <rect height="20" width="10" x="30" y="30" />
+            <!-- bottom -->
+            <rect height="10" width="110" x="0" y="110" />
+            <!-- mouth -->
+            <rect height="10" width="30" x="40" y="70" />
+            <!-- mouth left-->
+            <rect height="10" width="10" x="30" y="80" />
+            <!-- mouth right -->
+            <rect height="10" width="10" x="70" y="80" />
+            <!-- right -->
+            <rect height="80" width="10" x="100" y="30" />
+        </svg>
+
+    </MudContainer>
+
+
+
+}
 else
 {
     <MudProgressLinear Color="Color.Secondary" Indeterminate="true" Class="my-7" />
 }
 
+<script>
+    function downloadImage(filename, dataUrl) {
+        const element = document.createElement('a');
+        element.setAttribute('href', dataUrl);
+        element.setAttribute('download', filename);
+
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
+</script>
+
 @code {
     private QrCodeData qrCodeResponse;
     private string filterText;
     private string redirectMessage;
+    private bool hasApiCallCompleted = false;
+    private bool hasQrCodes = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -163,10 +236,26 @@ else
             try
             {
                 qrCodeResponse = await ApiService.GetQRCodes();
+                if (qrCodeResponse != null && qrCodeResponse.data.Any())
+                {
+                    hasQrCodes = true;
+                }
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // 404 means there are no QR codes for the user
+                hasQrCodes = false;
             }
             catch (Exception ex)
             {
                 await JSRuntime.InvokeVoidAsync("console.error", $"Error fetching QR Codes: {ex.Message}");
+                Snackbar.Add($"Error fetching QR Codes: {ex.Message}", Severity.Error);
+
+            }
+            finally
+            {
+                // Set the flag to true to indicate that the API call has completed
+                hasApiCallCompleted = true;
             }
         }
 
@@ -230,6 +319,8 @@ else
         {
             // Handle any errors that occur during the API call
             await JSRuntime.InvokeVoidAsync("console.error", $"Error refreshing QR Codes: {ex.Message}");
+            Snackbar.Add($"Error refreshing QR Codes: {ex.Message}", Severity.Error);
+
         }
         StateHasChanged();
     }
@@ -242,6 +333,14 @@ else
         }
 
         return qrCodeResponse.data.Where(qrCode => qrCode.title.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.reference.Contains(filterText, StringComparison.OrdinalIgnoreCase) || qrCode.description.Contains(filterText, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task DownloadQrCodeImage(QrCodeResponse qrCode)
+    {
+        var filename = $"{qrCode.title}.png";
+        await JSRuntime.InvokeVoidAsync("downloadImage", filename, qrCode.qrCode);
+        Snackbar.Add("Image Downloaded Successfully!", Severity.Success);
+
     }
 
 

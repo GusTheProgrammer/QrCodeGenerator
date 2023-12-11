@@ -16,7 +16,3 @@ function downloadFile(filename, contentType, content) {
     }
 }
 
-
-window.clearLocalStorage = () => {
-    localStorage.clear();
-};
